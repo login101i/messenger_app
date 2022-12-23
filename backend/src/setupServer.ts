@@ -8,7 +8,9 @@ import cookieSession from 'cookie-session';
 import 'express-async-errors';
 var colors = require('colors');
 import { config } from './config';
-import { CompletionTriggerKind } from 'typescript';
+import { Server } from 'socket.io';
+import { createClient } from 'redis';
+import { createAdapter } from '@socket.io/redis-adapter';
 
 const SERVER_PORT = 5000;
 
@@ -20,7 +22,7 @@ export class MessengerServer {
 	}
 
 	public start(): void {
-		// this.securityMiddleware(this.app);
+		this.securityMiddleware(this.app);
 		this.standardMiddleware(this.app);
 		this.routesMiddleware(this.app);
 		this.globalErrorHandler(this.app);
@@ -59,16 +61,34 @@ export class MessengerServer {
 	private async startServer(app: Application): Promise<void> {
 		try {
 			const httpServer: http.Server = new http.Server(app);
+			const socketID: Server = await this.createSocketID(httpServer);
 			this.startHttpServer(httpServer);
+			this.socketIOConnections(socketID);
 		} catch (error) {
 			console.log(error);
 		}
 	}
-	private createsSocketID(httpServer: http.Server): void {}
+	private async createSocketID(httpServer: http.Server): Promise<Server> {
+		const io: Server = new Server(httpServer, {
+			cors: {
+				origin: config.CLIENT_URL,
+				methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+			},
+		});
+		const pubClient = createClient({ url: config.REDIS_HOST });
+		const subClient = pubClient.duplicate();
+		//cr
+		await Promise.all([pubClient.connect(), subClient.connect()]);
+		io.adapter(createAdapter(pubClient, subClient));
+		return io;
+	}
 
 	private startHttpServer(httpServer: http.Server): void {
+		console.log(`Server has started with process ${process.pid}`.bgMagenta);
 		httpServer.listen(SERVER_PORT, () => {
 			console.log(`Server running on port ${SERVER_PORT}`.bgBlue);
 		});
 	}
+
+	private socketIOConnections(io: Server): void {}
 }
