@@ -14,9 +14,10 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import applicationRoutes from './routes';
 import HTTP_STATUS from 'http-status-codes';
 import { CustomError, IErrorResponse } from './shared/globals/helpers/error-handler';
-
+import Logger from 'bunyan';
 
 const SERVER_PORT = 5000;
+const log: Logger = config.createLogger('server');
 
 export class MessengerServer {
 	private app: Application;
@@ -70,7 +71,7 @@ export class MessengerServer {
 		});
 
 		app.use((error: IErrorResponse, _req: Request, res: Response, next: NextFunction) => {
-			console.log(`${error}`.bgYellow);
+			log.error(`${error}`.bgYellow);
 			if (error instanceof CustomError) {
 				return res.status(error.statusCode).json(error.serializeErrors());
 			}
@@ -85,7 +86,7 @@ export class MessengerServer {
 			this.startHttpServer(httpServer);
 			this.socketIOConnections(socketID);
 		} catch (error) {
-			console.log(error);
+			log.error(error);
 		}
 	}
 	private async createSocketID(httpServer: http.Server): Promise<Server> {
@@ -104,9 +105,9 @@ export class MessengerServer {
 	}
 
 	private startHttpServer(httpServer: http.Server): void {
-		console.log(`Server has started with process ${process.pid}`.bgMagenta);
+		log.info(`Server has started with process ${process.pid}`.bgMagenta);
 		httpServer.listen(SERVER_PORT, () => {
-			console.log(`Server running on port ${SERVER_PORT}`.bgBlue);
+			log.info(`Server running on port ${SERVER_PORT}`.bgBlue);
 		});
 	}
 
