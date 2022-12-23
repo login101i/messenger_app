@@ -6,6 +6,9 @@ import hpp from 'hpp';
 import compression from 'compression';
 import cookieSession from 'cookie-session';
 import 'express-async-errors';
+var colors = require('colors');
+import { config } from './config';
+import { CompletionTriggerKind } from 'typescript';
 
 const SERVER_PORT = 5000;
 
@@ -28,16 +31,16 @@ export class MessengerServer {
 		app.use(
 			cookieSession({
 				name: 'session',
-				keys: ['test1', 'test2'],
+				keys: [config.SECRET_KEY_ONE!, config.SECRET_KEY_TWO!],
 				maxAge: 24 * 7 * 3600000,
-				secure: false
+				secure: config.NODE_ENV !== 'development',
 			}),
 		);
 		app.use(hpp());
 		app.use(helmet());
 		app.use(
 			cors({
-				origin: "*",
+				origin: config.CLIENT_URL,
 				credentials: true,
 				optionsSuccessStatus: 200,
 				methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -53,7 +56,6 @@ export class MessengerServer {
 	private routesMiddleware(app: Application): void {}
 	private globalErrorHandler(app: Application): void {}
 
-
 	private async startServer(app: Application): Promise<void> {
 		try {
 			const httpServer: http.Server = new http.Server(app);
@@ -66,7 +68,7 @@ export class MessengerServer {
 
 	private startHttpServer(httpServer: http.Server): void {
 		httpServer.listen(SERVER_PORT, () => {
-			console.log(`Server running on port ${SERVER_PORT}`);
+			console.log(`Server running on port ${SERVER_PORT}`.bgBlue);
 		});
 	}
 }
