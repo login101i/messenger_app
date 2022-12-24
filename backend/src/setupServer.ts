@@ -6,14 +6,14 @@ import hpp from 'hpp';
 import compression from 'compression';
 import cookieSession from 'cookie-session';
 import 'express-async-errors';
-import { config } from './config';
+import { config } from '@root/config';
 import { Server } from 'socket.io';
 import { createClient } from 'redis';
-import { createAdapter } from '@socket.io/redis-adapter';
-import applicationRoutes from './routes';
+import applicationRoutes from '@root/routes';
 import HTTP_STATUS from 'http-status-codes';
-import { CustomError, IErrorResponse } from './shared/globals/helpers/error-handler';
 import Logger from 'bunyan';
+import { createAdapter } from '@socket.io/redis-adapter';
+import { CustomError, IErrorResponse } from '@global/helpers/error-handler';
 
 const SERVER_PORT = 5000;
 const log: Logger = config.createLogger('server');
@@ -110,5 +110,7 @@ export class MessengerServer {
     });
   }
 
-  private socketIOConnections(io: Server): void {}
+  private socketIOConnections(io: Server): void {
+    log.info('socket connection ');
+  }
 }
